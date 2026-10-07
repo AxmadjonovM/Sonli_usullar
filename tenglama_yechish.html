@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tenglamalarni taqribiy yechish</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/12.4.1/math.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{--bg:#f4f6fb;--card:#fff;--fg:#1b2336;--mut:#667089;--bd:#dfe4ef;--ac:#4f46e5;--b:#3b82f6;--n:#ef4444;--c:#10b981;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1420;--card:#192031;--fg:#e8ecf6;--mut:#97a0b8;--bd:#2a3350;--ac:#818cf8}}
+:root[data-theme="dark"]{--bg:#0f1420;--card:#192031;--fg:#e8ecf6;--mut:#97a0b8;--bd:#2a3350;--ac:#818cf8}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.45}
+.wrap{max-width:1100px;margin:0 auto;padding:18px 14px 40px}
+header{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+h1{font-size:1.4rem;margin:0}
+h1 small{display:block;font-size:.85rem;color:var(--mut);font-weight:400}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 2px 10px rgba(0,0,0,.04)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+label{display:block;font-size:.8rem;color:var(--mut);margin-bottom:4px}
+input[type=text],input[type=number],select{width:100%;padding:10px 12px;border:1px solid var(--bd);border-radius:9px;background:var(--bg);color:var(--fg);font-size:1rem;font-family:inherit}
+input:focus,select:focus{outline:2px solid var(--ac);outline-offset:1px}
+.fx{grid-column:1/-1}
+.methods{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}
+.chip{display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--bd);border-radius:999px;cursor:pointer;font-size:.9rem;user-select:none}
+.chip input{accent-color:var(--ac)}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+button{border:0;border-radius:10px;padding:11px 18px;font-size:1rem;cursor:pointer;font-family:inherit}
+.primary{background:var(--ac);color:#fff;font-weight:600}
+.ghost{background:transparent;border:1px solid var(--bd);color:var(--fg)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.msg{padding:10px 12px;border-radius:9px;margin-top:12px;font-size:.9rem;display:none}
+.msg.err{display:block;background:rgba(239,68,68,.12);color:#dc2626;border:1px solid rgba(239,68,68,.35)}
+.msg.warn{display:block;background:rgba(245,158,11,.14);color:#b45309;border:1px solid rgba(245,158,11,.4)}
+.res{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.rc{border-radius:12px;padding:14px;border:1px solid var(--bd);border-top:4px solid var(--col);background:var(--bg)}
+.rc h3{margin:0 0 6px;font-size:1rem}
+.rc .root{font-size:1.25rem;font-weight:700;font-variant-numeric:tabular-nums;word-break:break-all}
+.rc p{margin:3px 0;font-size:.85rem;color:var(--mut)}
+.charts{display:grid;grid-template-columns:1fr;gap:14px}
+.cbox{position:relative;height:380px}
+.cbox.s{height:280px}
+h2{font-size:1.05rem;margin:0 0 10px}
+.tabs{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+.tab{padding:7px 14px;border-radius:8px;border:1px solid var(--bd);background:transparent;color:var(--fg);font-size:.9rem}
+.tab.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+.tw{overflow-x:auto;max-height:340px;overflow-y:auto}
+table{border-collapse:collapse;width:100%;font-size:.85rem;font-variant-numeric:tabular-nums}
+th,td{padding:6px 10px;text-align:right;border-bottom:1px solid var(--bd);white-space:nowrap}
+th{position:sticky;top:0;background:var(--card);color:var(--mut);font-weight:600}
+tr:last-child td{background:rgba(79,70,229,.1);font-weight:600}
+.hint{font-size:.78rem;color:var(--mut);margin-top:8px}
+#out{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Tenglamalarni taqribiy yechish<small>Kesmani teng ikkiga bo'lish · Nyuton · Vatarlar usullari</small></h1>
+  <button class="ghost" id="theme">🌓 Mavzu</button>
+</header>
+
+<div class="card">
+  <div class="grid">
+    <div class="fx"><label>f(x) funksiya (masalan: x^3 - 2*x - 5, sin(x) - x/2, exp(x) - 3*x)</label>
+      <input type="text" id="fx" value="x^3 - 2*x - 5"></div>
+    <div><label>a (chap chegara)</label><input type="number" id="a" value="2" step="any"></div>
+    <div><label>b (o'ng chegara)</label><input type="number" id="b" value="3" step="any"></div>
+    <div><label>ε (aniqlik)</label><input type="text" id="eps" value="0.000001"></div>
+    <div><label>Namuna</label>
+      <select id="ex">
+        <option value="">— tanlang —</option>
+        <option>x^3 - 2*x - 5|2|3</option>
+        <option>cos(x) - x|0|1</option>
+        <option>exp(x) - 3*x|0|1</option>
+        <option>x^2 - 2|1|2</option>
+        <option>log(x) + x - 2|1|2</option>
+        <option>sin(x) - x/2|1|3</option>
+      </select></div>
+  </div>
+  <div class="methods">
+    <label class="chip"><input type="checkbox" id="mb" checked><span class="dot" style="background:var(--b)"></span>Yarim bo'lish</label>
+    <label class="chip"><input type="checkbox" id="mn" checked><span class="dot" style="background:var(--n)"></span>Nyuton</label>
+    <label class="chip"><input type="checkbox" id="mc" checked><span class="dot" style="background:var(--c)"></span>Vatarlar</label>
+  </div>
+  <div class="row"><button class="primary" id="go">Yechish</button><button class="ghost" id="reset">Tozalash</button></div>
+  <div class="msg" id="msg"></div>
+  <div class="hint">Funksiyalar: sin, cos, tan, exp, log (ln), sqrt, abs, pi, e; daraja uchun ^ ishlating.</div>
+</div>
+
+<div id="out">
+  <div class="card"><h2>Natijalar</h2><div class="res" id="res"></div></div>
+  <div class="charts">
+    <div class="card"><h2>f(x) grafigi va iteratsiya nuqtalari</h2><div class="cbox"><canvas id="c1"></canvas></div></div>
+    <div class="card"><h2>Yaqinlashish tezligi: |f(xₙ)| (logarifmik shkala)</h2><div class="cbox s"><canvas id="c2"></canvas></div></div>
+  </div>
+  <div class="card"><h2>Iteratsiyalar jadvali</h2><div class="tabs" id="tabs"></div><div class="tw" id="tbl"></div></div>
+</div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const COL={b:'#3b82f6',n:'#ef4444',c:'#10b981'};
+let f,df,d2,dec=8,charts={},results=[];
+
+function fmt(v){return (v===undefined||!isFinite(v))?'—':(Math.abs(v)<1e-9&&v!==0?v.toExponential(3):v.toFixed(dec))}
+function fe(v){return (!isFinite(v))?'—':v===0?'0':v.toExponential(3)}
+function showMsg(t,c){const m=$('msg');m.className='msg '+c;m.textContent=t}
+function clearMsg(){$('msg').className='msg'}
+
+function compile(expr,a,b){
+  const node=math.parse(expr.replace(/\bln\(/g,'log(').replace(/,/g,'.'));
+  const code=node.compile();
+  f=x=>{const v=code.evaluate({x});return typeof v==='number'?v:NaN};
+  try{const dc=math.derivative(node,'x').compile();df=x=>dc.evaluate({x})}
+  catch(e){df=x=>{const h=1e-6;return (f(x+h)-f(x-h))/(2*h)}}
+  const h=Math.max(1e-4,(b-a)*1e-4);
+  d2=x=>(f(x+h)-2*f(x)+f(x-h))/(h*h);
+  f(a);
+}
+
+function bisection(a,b,eps){
+  const rows=[];let n=0,c;
+  while(n<200){
+    n++;c=(a+b)/2;const fc=f(c),fa=f(a);
+    rows.push({n,cols:[a,b,c,fc,(b-a)/2],x:c,fx:fc});
+    if(Math.abs(fc)===0||(b-a)/2<eps)break;
+    if(fa*fc<0)b=c;else a=c;
+  }
+  return {key:'b',name:"Yarim bo'lish",head:['n','a','b','c','f(c)','(b−a)/2'],rows,root:c,fmtc:[0,1,1,1,2,2]};
+}
+
+function newton(a,b,eps){
+  let x=f(a)*d2(a)>0?a:(f(b)*d2(b)>0?b:(a+b)/2);
+  const x0=x,rows=[];let ok=true,note='';
+  for(let n=0;n<100;n++){
+    const fx=f(x),d=df(x);
+    if(!isFinite(fx)||!isFinite(d)||d===0){ok=false;note="Hosila nolga teng yoki aniqlanmagan";break}
+    const xn=x-fx/d,dx=Math.abs(xn-x);
+    rows.push({n:n,cols:[x,fx,d,xn,dx],x:xn,fx:f(xn)});
+    x=xn;
+    if(dx<eps||Math.abs(f(x))<eps*1e-3)break;
+    if(Math.abs(x)>1e12){ok=false;note="Uzoqlashuvchi jarayon";break}
+  }
+  return {key:'n',name:'Nyuton',head:['n','xₙ','f(xₙ)',"f′(xₙ)",'xₙ₊₁','|Δx|'],rows,root:x,ok,note,x0,fmtc:[0,1,2,1,1,2]};
+}
+
+function chord(a,b,eps){
+  // qo'zg'almas uchi: f(c)*f''(c) > 0
+  let fixed,x;
+  if(f(a)*d2(a)>0){fixed=a;x=b}else{fixed=b;x=a}
+  const rows=[];let ok=true,note='';
+  for(let n=0;n<500;n++){
+    const fx=f(x),ff=f(fixed),den=ff-fx;
+    if(den===0||!isFinite(den)){ok=false;note="Maxraj nolga teng";break}
+    const xn=x-fx*(fixed-x)/den,dx=Math.abs(xn-x);
+    rows.push({n:n,cols:[x,fx,xn,f(xn),dx],x:xn,fx:f(xn)});
+    x=xn;
+    if(dx<eps)break;
+  }
+  return {key:'c',name:'Vatarlar',head:['n','xₙ','f(xₙ)','xₙ₊₁','f(xₙ₊₁)','|Δx|'],rows,root:x,ok,note,fixed,fmtc:[0,1,2,1,2,2]};
+}
+
+function run(){
+  clearMsg();
+  try{
+    const expr=$('fx').value.trim();
+    const a=parseFloat($('a').value),b=parseFloat($('b').value);
+    const eps=parseFloat($('eps').value.replace(',','.'));
+    if(!expr)throw new Error("f(x) ni kiriting");
+    if(!isFinite(a)||!isFinite(b)||a>=b)throw new Error("Oraliq noto'g'ri: a < b bo'lishi kerak");
+    if(!(eps>0))throw new Error("ε > 0 bo'lishi kerak");
+    compile(expr,a,b);
+    dec=Math.min(12,Math.max(4,Math.ceil(-Math.log10(eps))+2));
+    const fa=f(a),fb=f(b);
+    if(!isFinite(fa)||!isFinite(fb))throw new Error("f(x) kesma chetlarida aniqlanmagan");
+    if(fa*fb>0)showMsg("Diqqat: f(a)·f(b) > 0 — kesmada ildiz bo'lmasligi yoki juft sonda bo'lishi mumkin. Natijalar ishonchsiz bo'lishi mumkin.",'warn');
+    results=[];
+    if($('mb').checked&&fa*fb<=0)results.push(bisection(a,b,eps));
+    else if($('mb').checked)showMsg("Yarim bo'lish usuli uchun f(a)·f(b) < 0 shart bajarilmadi — usul o'tkazib yuborildi.",'warn');
+    if($('mn').checked)results.push(newton(a,b,eps));
+    if($('mc').checked)results.push(chord(a,b,eps));
+    if(!results.length)throw new Error("Hech bo'lmaganda bitta usulni tanlang");
+    render(a,b,eps);
+  }catch(e){showMsg("Xato: "+e.message,'err');}
+}
+
+function render(a,b,eps){
+  $('out').style.display='block';
+  $('res').innerHTML=results.map(r=>{
+    const bad=r.ok===false;
+    return `<div class="rc" style="--col:${COL[r.key]}"><h3>${r.name}</h3>
+    <div class="root">${bad?'—':'x ≈ '+fmt(r.root)}</div>
+    <p>Iteratsiyalar soni: <b>${r.rows.length}</b></p>
+    <p>f(x*) = ${fe(f(r.root))}</p>
+    ${r.x0!==undefined?`<p>Boshlang'ich yaqinlashish: x₀ = ${fmt(r.x0)}</p>`:''}
+    ${r.fixed!==undefined?`<p>Qo'zg'almas uch: ${fmt(r.fixed)}</p>`:''}
+    ${bad?`<p style="color:#dc2626">${r.note}</p>`:''}</div>`}).join('');
+  drawMain(a,b);drawConv();
+  $('tabs').innerHTML=results.map((r,i)=>`<button class="tab ${i?'':'on'}" data-i="${i}">${r.name}</button>`).join('');
+  document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));t.classList.add('on');table(+t.dataset.i)});
+  table(0);
+  $('out').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function table(i){
+  const r=results[i];
+  const fm=[v=>v,v=>fmt(v),v=>fe(v)];
+  let h='<table><thead><tr>'+r.head.map(x=>`<th>${x}</th>`).join('')+'</tr></thead><tbody>';
+  r.rows.forEach(row=>{h+=`<tr><td>${row.n}</td>`+row.cols.map((v,j)=>`<td>${fm[r.fmtc[j+1]](v)}</td>`).join('')+'</tr>'});
+  $('tbl').innerHTML=h+'</tbody></table>';
+}
+
+function themeColors(){const s=getComputedStyle(document.documentElement);return{fg:s.getPropertyValue('--fg').trim(),grid:'rgba(128,128,128,.2)'}}
+
+function drawMain(a,b){
+  const pad=(b-a)*0.25,x0=a-pad,x1=b+pad,N=500,pts=[];
+  for(let i=0;i<=N;i++){const x=x0+(x1-x0)*i/N;let y=f(x);pts.push({x,y:isFinite(y)&&Math.abs(y)<1e8?y:null})}
+  const ys=pts.filter(p=>p.y!==null).map(p=>p.y).sort((p,q)=>p-q);
+  const lo=ys[Math.floor(ys.length*0.02)],hi=ys[Math.floor(ys.length*0.98)],m=(hi-lo)*0.1||1;
+  const tc=themeColors();
+  const ds=[{label:'f(x)',data:pts,showLine:true,borderColor:'#8b5cf6',borderWidth:2.5,pointRadius:0,tension:.2,spanGaps:false,order:5},
+    {label:'y = 0',data:[{x:x0,y:0},{x:x1,y:0}],showLine:true,borderColor:'rgba(128,128,128,.7)',borderWidth:1,pointRadius:0,order:6},
+    {label:'[a, b]',data:[{x:a,y:0},{x:b,y:0}],showLine:true,borderColor:'#f59e0b',borderWidth:5,pointRadius:6,pointStyle:'rectRot',backgroundColor:'#f59e0b',order:4}];
+  results.forEach(r=>{
+    ds.push({label:r.name+' iteratsiyalari',data:r.rows.map(q=>({x:q.x,y:0})),showLine:false,backgroundColor:COL[r.key]+'aa',borderColor:COL[r.key],pointRadius:r.rows.map((_,i)=>i===r.rows.length-1?0:4+0),pointHoverRadius:7,order:3});
+    if(r.ok!==false)ds.push({label:r.name+' ildizi',data:[{x:r.root,y:0}],showLine:false,backgroundColor:COL[r.key],borderColor:'#fff',borderWidth:2,pointStyle:'star',pointRadius:11,order:1});
+    ds.push({label:r.name+' (f(xₙ))',data:r.rows.map(q=>({x:q.x,y:q.fx})),showLine:false,backgroundColor:'transparent',borderColor:COL[r.key],pointRadius:3,pointStyle:'circle',order:2,hidden:false});
+  });
+  if(charts.m)charts.m.destroy();
+  charts.m=new Chart($('c1'),{type:'scatter',data:{datasets:ds},options:{responsive:true,maintainAspectRatio:false,animation:{duration:700},
+    interaction:{mode:'nearest',intersect:false},
+    scales:{x:{type:'linear',min:x0,max:x1,title:{display:true,text:'x',color:tc.fg},grid:{color:tc.grid},ticks:{color:tc.fg}},
+      y:{min:lo-m,max:hi+m,title:{display:true,text:'f(x)',color:tc.fg},grid:{color:tc.grid},ticks:{color:tc.fg}}},
+    plugins:{legend:{labels:{color:tc.fg,usePointStyle:true,boxWidth:8,filter:i=>!i.text.includes('f(xₙ)')&&i.text!=='y = 0'}},
+      tooltip:{callbacks:{label:c=>`${c.dataset.label}: x=${(+c.parsed.x).toFixed(dec)}${c.parsed.y!=null?', y='+(+c.parsed.y).toExponential(2):''}`}}}}});
+}
+
+function drawConv(){
+  const tc=themeColors();
+  const ds=results.map(r=>({label:r.name,data:r.rows.map((q,i)=>({x:i+1,y:Math.max(Math.abs(q.fx),1e-17)})),borderColor:COL[r.key],backgroundColor:COL[r.key],borderWidth:2.5,pointRadius:4,tension:.15}));
+  if(charts.c)charts.c.destroy();
+  charts.c=new Chart($('c2'),{type:'line',data:{datasets:ds},options:{responsive:true,maintainAspectRatio:false,parsing:false,animation:{duration:700},
+    scales:{x:{type:'linear',title:{display:true,text:'Iteratsiya raqami',color:tc.fg},grid:{color:tc.grid},ticks:{color:tc.fg,precision:0}},
+      y:{type:'logarithmic',title:{display:true,text:'|f(xₙ)|',color:tc.fg},grid:{color:tc.grid},ticks:{color:tc.fg}}},
+    plugins:{legend:{labels:{color:tc.fg,usePointStyle:true}}}}});
+}
+
+$('go').onclick=run;
+['fx','a','b','eps'].forEach(id=>$(id).addEventListener('keydown',e=>{if(e.key==='Enter')run()}));
+$('ex').onchange=e=>{const v=e.target.value;if(!v)return;const[p,a,b]=v.split('|');$('fx').value=p;$('a').value=a;$('b').value=b;run()};
+$('reset').onclick=()=>{$('out').style.display='none';clearMsg();$('ex').value='';
+  Object.values(charts).forEach(c=>c.destroy());charts={}};
+$('theme').onclick=()=>{const r=document.documentElement;const dark=r.dataset.theme?r.dataset.theme==='dark':matchMedia('(prefers-color-scheme:dark)').matches;
+  r.dataset.theme=dark?'light':'dark';if(results.length){drawMain(+$('a').value,+$('b').value);drawConv()}};
+run();
+</script>
+</body>
+</html>
